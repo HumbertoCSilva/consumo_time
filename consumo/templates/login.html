@@ -1,0 +1,7 @@
+<form method="post">
+    {% csrf_token %}
+    <h2>Identificação do Funcionário</h2>
+    <input type="text" name="cpf" placeholder="Digite seu CPF" required>
+    <button type="submit">Acessar</button>
+</form>
+{% if messages %}{% for m in messages %}{{m}}{% endfor %}{% endif %}

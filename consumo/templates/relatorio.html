@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Relatório de Consumo</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .total-box { background: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .filtro { margin-bottom: 30px; padding: 15px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>Relatório de Consumo - MundoPet</h1>
+
+    <div class="filtro">
+        <form method="get">
+            <label>Início: <input type="date" name="inicio" value="{{ data_inicio }}"></label>
+            <label>Fim: <input type="date" name="fim" value="{{ data_fim }}"></label>
+            <button type="submit">Filtrar</button>
+            <a href="{% url 'relatorio_consumo' %}">Limpar</a>
+        </form>
+    </div>
+
+    <h3>Resumo por Funcionário</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Funcionário</th>
+                <th>Total Consumido (R$)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resumo in resumo_funcionarios %}
+            <tr>
+                <td>{{ resumo.funcionario__nome }}</td>
+                <td><strong>R$ {{ resumo.total_gasto|stringformat:".2f" }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-box">
+        <h2>Total Geral do Período: R$ {{ total_geral|stringformat:".2f" }}</h2>
+    </div>
+
+    <hr>
+
+    <h3>Histórico Detalhado</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Data/Hora</th>
+                <th>Funcionário</th>
+                <th>Itens</th>
+                <th>Valor (R$)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in lancamentos %}
+            <tr>
+                <td>{{ l.data_hora|date:"d/m/Y H:i" }}</td>
+                <td>{{ l.funcionario.nome }}</td>
+                <td>
+                    {% for item in l.itens.all %}
+                        {{ item.descricao }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ l.total }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">Nenhum lançamento encontrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

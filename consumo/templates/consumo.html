@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Lançamento de Consumo</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 40px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .grid-itens {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-item {
+            padding: 20px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            transition: 0.2s;
+        }
+
+        .btn-item:hover {
+            background: #e9ecef;
+            border-color: #bbb;
+        }
+
+        .carrinho {
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+
+        .btn-finalizar {
+            padding: 15px 30px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-finalizar:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Olá, {{ funcionario.nome }}!</h2>
+        <p>Toque nos itens para adicionar ao seu consumo:</p>
+
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="campo-busca" onkeyup="filtrarItens()"
+                placeholder="Pesquisar item (ex: Café, Almoço...)"
+                style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+        </div>
+
+        <div class="grid-itens">
+            {% for item in itens %}
+            <button type="button" class="btn-item card-item" data-nome="{{ item.descricao|lower }}"
+                onclick="adicionarItem('{{ item.id }}', '{{ item.descricao }}', {{ item.valor|stringformat:'.2f' }})">
+                <strong>{{ item.descricao }}</strong><br>
+                R$ {{ item.valor }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <div class="carrinho">
+            <h3>Seu Consumo:</h3>
+            <button type="button" onclick="limparCarrinho()"
+                style="padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Limpar Carrinho
+            </button>
+            <ul id="lista-carrinho"></ul>
+            <p><strong>Total: R$ <span id="display-total">0.00</span></strong></p>
+
+            <form method="post" id="form-consumo">
+                {% csrf_token %}
+                <div id="inputs-escondidos"></div>
+                <button type="submit" id="btn-finalizar" class="btn-finalizar" style="display: none;">
+                    Confirmar e Finalizar
+                </button>
+            </form>
+        </div>
+        <br>
+        <a href="{% url 'login_funcionario' %}" style="color: #666;">Sair / Cancelar</a>
+    </div>
+
+    <script>
+        let carrinho = {};
+        let totalGeral = 0;
+
+        function adicionarItem(id, descricao, valor) {
+            if (carrinho[id]) {
+                carrinho[id].qtd += 1;
+            } else {
+                carrinho[id] = { descricao: descricao, valor: parseFloat(valor), qtd: 1 };
+            }
+            atualizarInterface();
+        }
+
+        function atualizarInterface() {
+            const lista = document.getElementById('lista-carrinho');
+            const inputs = document.getElementById('inputs-escondidos');
+            const btn = document.getElementById('btn-finalizar');
+
+            lista.innerHTML = '';
+            inputs.innerHTML = '';
+            totalGeral = 0;
+
+            for (let id in carrinho) {
+                let item = carrinho[id];
+                totalGeral += (item.valor * item.qtd);
+                lista.innerHTML += `<li>${item.qtd}x ${item.descricao} - R$ ${(item.valor * item.qtd).toFixed(2)}</li>`;
+
+                for (let i = 0; i < item.qtd; i++) {
+                    inputs.innerHTML += `<input type="hidden" name="itens" value="${id}">`;
+                }
+            }
+
+            document.getElementById('display-total').innerText = totalGeral.toFixed(2);
+            btn.style.display = totalGeral > 0 ? 'block' : 'none';
+        }
+
+        function limparCarrinho() {
+            if (confirm("Deseja realmente limpar todos os itens selecionados?")) {
+                carrinho = {};
+                totalGeral = 0;
+                atualizarInterface();
+            }
+        }
+
+        function filtrarItens() {
+            const termoBusca = document.getElementById('campo-busca').value.toLowerCase();
+            const cards = document.querySelectorAll('.card-item');
+
+            cards.forEach(card => {
+                const nomeItem = card.getAttribute('data-nome');
+                if (nomeItem.includes(termoBusca)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
